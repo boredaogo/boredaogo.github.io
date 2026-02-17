@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noxious Planet — A Serious Game for Environmental Awareness</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Sarabun:wght@300;400;600;700&display=swap');
+:root{
+  --orange:#ff6b1a;
+  --orange-light:#ff8c42;
+  --orange-dim:#fff0e8;
+  --red:#e63946;
+  --cyan:#2563eb;
+  --bg:#f8f4f0;
+  --bg2:#fff;
+  --bg3:#fef6ee;
+  --card:#fff;
+  --border:rgba(255,107,26,0.18);
+  --border2:rgba(255,107,26,0.1);
+  --text:#1a1208;
+  --text2:#5a3e28;
+  --text3:#a07850;
+  --shadow:rgba(255,107,26,0.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35;}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:14px 52px;background:rgba(248,244,240,0.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.nav-logo{font-family:'Orbitron',monospace;font-size:17px;font-weight:900;color:var(--orange);letter-spacing:3px;}
+.nav-links{display:flex;gap:30px;list-style:none;}
+.nav-links a{color:var(--text3);text-decoration:none;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;transition:color .25s;}
+.nav-links a:hover{color:var(--orange);}
+
+/* HERO */
+#hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:110px 24px 80px;overflow:hidden;background:linear-gradient(160deg,#fff8f3 0%,#fef0e4 50%,#fff 100%);}
+.hero-blob{position:absolute;inset:0;z-index:0;pointer-events:none;}
+.hero-blob::before{content:'';position:absolute;top:-10%;left:-10%;width:60%;height:80%;border-radius:50%;background:radial-gradient(circle,rgba(255,140,66,0.14) 0%,transparent 70%);}
+.hero-blob::after{content:'';position:absolute;bottom:0;right:-5%;width:50%;height:70%;border-radius:50%;background:radial-gradient(circle,rgba(255,107,26,0.08) 0%,transparent 65%);}
+.hero-inner{position:relative;z-index:2;max-width:840px;}
+.badge{display:inline-block;background:rgba(255,107,26,0.1);border:1px solid rgba(255,107,26,0.3);color:var(--orange);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:5px;padding:6px 22px;border-radius:2px;margin-bottom:30px;text-transform:uppercase;}
+h1{font-family:'Orbitron',monospace;font-size:clamp(42px,9vw,96px);font-weight:900;line-height:1;color:var(--text);margin-bottom:14px;}
+.glow-text{color:var(--orange);}
+.hero-sub{font-family:'Orbitron',monospace;font-size:clamp(9px,1.3vw,11px);color:var(--text3);letter-spacing:4px;margin-bottom:22px;}
+.hero-desc{font-size:17px;line-height:1.95;color:var(--text2);max-width:580px;margin:0 auto 50px;}
+.hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+.btn-primary{display:inline-flex;align-items:center;gap:10px;background:var(--orange);color:#fff;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:2px;padding:15px 38px;border-radius:6px;text-decoration:none;transition:all .3s;box-shadow:0 6px 28px rgba(255,107,26,0.32);border:none;cursor:pointer;}
+.btn-primary:hover{background:#e05a0f;box-shadow:0 8px 36px rgba(255,107,26,0.46);transform:translateY(-2px);}
+.btn-outline{display:inline-flex;align-items:center;gap:10px;border:1.5px solid var(--border);color:var(--text2);background:transparent;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:2px;padding:15px 38px;border-radius:6px;text-decoration:none;transition:all .3s;}
+.btn-outline:hover{border-color:var(--orange);color:var(--orange);box-shadow:0 4px 16px rgba(255,107,26,0.14);transform:translateY(-2px);}
+
+/* STATS */
+.stats-bar{position:relative;z-index:2;display:flex;justify-content:center;flex-wrap:wrap;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:28px 48px;box-shadow:0 2px 20px var(--shadow);}
+.stat{flex:1;min-width:150px;text-align:center;padding:0 24px;border-right:1px solid var(--border);}
+.stat:last-child{border-right:none;}
+.stat-n{font-family:'Orbitron',monospace;font-size:34px;font-weight:900;color:var(--orange);}
+.stat-l{font-size:11px;color:var(--text3);letter-spacing:1px;margin-top:3px;}
+
+/* SECTIONS */
+section{position:relative;z-index:2;padding:96px 48px;}
+.inner{max-width:1080px;margin:0 auto;}
+.stag{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:5px;color:var(--orange);text-transform:uppercase;margin-bottom:10px;}
+h2{font-family:'Orbitron',monospace;font-size:clamp(22px,3.8vw,40px);font-weight:900;color:var(--text);margin-bottom:14px;line-height:1.2;}
+.ssub{font-size:15px;color:var(--text3);margin-bottom:56px;max-width:540px;}
+
+/* STORY */
+#story{background:var(--bg3);}
+.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;}
+.story-text p{font-size:15px;line-height:2;color:var(--text2);margin-bottom:14px;}
+.story-text strong{color:var(--orange);}
+.terminal{background:#1e1208;border:1px solid rgba(255,107,26,0.25);border-radius:10px;overflow:hidden;font-family:'Courier New',monospace;font-size:12.5px;box-shadow:0 8px 40px rgba(255,107,26,0.1);}
+.t-head{background:#2a1a0a;padding:11px 16px;display:flex;align-items:center;gap:7px;border-bottom:1px solid rgba(255,107,26,0.15);}
+.dot{width:10px;height:10px;border-radius:50%;}
+.dr{background:#ff5f56;}.dy{background:#ffbd2e;}.dg{background:#27c93f;}
+.t-title{color:#7a5030;font-size:11px;margin-left:7px;letter-spacing:2px;}
+.t-body{padding:22px;line-height:2.1;}
+.tg{color:var(--orange-light);}.tc{color:#ffd580;}.tgr{color:#6a3a18;}.tw{color:#f0d8c0;}.tr{color:#ff6060;}
+.cur{display:inline-block;width:7px;height:13px;background:var(--orange-light);animation:blink 1s step-end infinite;vertical-align:middle;}
+@keyframes blink{50%{opacity:0;}}
+
+/* CHARACTERS */
+#characters{background:var(--bg2);}
+.chars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+.char-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all .3s;box-shadow:0 2px 12px var(--shadow);}
+.char-card:hover{border-color:var(--orange);transform:translateY(-6px);box-shadow:0 16px 48px rgba(255,107,26,0.15);}
+.char-vis{height:175px;display:flex;align-items:center;justify-content:center;font-size:68px;position:relative;overflow:hidden;}
+.char-vis::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 80%,rgba(255,107,26,0.08),transparent 65%);}
+.ci{padding:22px;}
+.crole{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:4px;color:var(--orange);margin-bottom:7px;}
+.cname{font-family:'Orbitron',monospace;font-size:19px;font-weight:900;color:var(--text);margin-bottom:10px;}
+.cdesc{font-size:13px;line-height:1.8;color:var(--text3);}
+.cstats{margin-top:14px;display:flex;flex-direction:column;gap:7px;}
+.crow{display:flex;align-items:center;gap:9px;}
+.clabel{font-size:10px;color:var(--text3);width:65px;flex-shrink:0;}
+.cbar{flex:1;height:4px;background:var(--orange-dim);border-radius:2px;overflow:hidden;}
+.cfill{height:100%;border-radius:2px;background:var(--orange);}
+
+/* SDGs */
+#sdgs{background:var(--bg3);}
+.sdg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+.sdg-card{display:flex;gap:18px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:22px;transition:all .3s;box-shadow:0 2px 8px var(--shadow);}
+.sdg-card:hover{border-color:var(--orange);box-shadow:0 6px 30px rgba(255,107,26,0.12);}
+.sdg-num{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:var(--orange);flex-shrink:0;width:36px;}
+.sdg-info h3{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:var(--text);margin-bottom:7px;}
+.sdg-info p{font-size:13px;line-height:1.75;color:var(--text3);}
+
+/* RESEARCH */
+#research{background:var(--bg2);}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start;}
+.chart-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:30px;box-shadow:0 2px 12px var(--shadow);}
+.chart-ttl{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2.5px;color:var(--orange);margin-bottom:22px;}
+.bgrp{margin-bottom:18px;}
+.blbl{font-size:13px;color:var(--text2);margin-bottom:7px;display:flex;justify-content:space-between;}
+.btrack{height:28px;background:#fde8d8;border-radius:6px;overflow:hidden;}
+.bfill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:11px;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;transition:width 1.6s ease;}
+.bpre{background:linear-gradient(90deg,#f5c4a0,#e8a070);color:#6a3a18;}
+.bpost{background:linear-gradient(90deg,#ff8c42,#ff6b1a);color:#fff;}
+.res-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:22px;margin-bottom:14px;box-shadow:0 2px 8px var(--shadow);}
+.res-card.hi{border-color:var(--orange);background:rgba(255,107,26,0.04);}
+.rlbl{font-size:11px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.rval{font-family:'Orbitron',monospace;font-size:30px;font-weight:900;color:var(--orange);}
+.sat-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.si{background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:14px;}
+.sa{font-size:11px;color:var(--text3);margin-bottom:5px;}
+.ss{font-family:'Orbitron',monospace;font-size:17px;font-weight:700;color:var(--orange);}
+
+/* TECH */
+#tech{background:var(--bg3);}
+.tech-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+.tech-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:30px;text-align:center;transition:all .3s;box-shadow:0 2px 8px var(--shadow);}
+.tech-card:hover{border-color:var(--orange);transform:translateY(-4px);box-shadow:0 10px 32px rgba(255,107,26,0.14);}
+.tico{font-size:42px;margin-bottom:14px;}
+.tname{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--text);margin-bottom:7px;}
+.tpurpose{font-size:12.5px;color:var(--text3);line-height:1.65;}
+.tver{display:inline-block;margin-top:11px;background:rgba(255,107,26,0.1);border:1px solid rgba(255,107,26,0.22);color:var(--orange);font-size:10px;letter-spacing:2px;padding:3px 11px;border-radius:4px;font-family:'Orbitron',monospace;}
+
+/* DOWNLOAD */
+#download{background:var(--bg2);text-align:center;}
+.dl-box{background:linear-gradient(135deg,#fff8f3,#fff);border:1px solid var(--border);border-radius:16px;padding:60px 44px;max-width:680px;margin:0 auto;position:relative;overflow:hidden;box-shadow:0 8px 48px rgba(255,107,26,0.1);}
+.dl-box::before{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,26,0.1),transparent 70%);}
+.dl-box>*{position:relative;z-index:1;}
+.dl-icon{font-size:54px;margin-bottom:20px;}
+.dl-box h2{font-size:28px;margin-bottom:10px;color:var(--text);}
+.dl-box>p{font-size:14px;color:var(--text3);margin-bottom:26px;}
+.sysreqs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0 36px;text-align:left;}
+.sysitem{background:var(--bg3);border-radius:8px;padding:13px;border:1px solid var(--border2);}
+.sysl{font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;font-weight:700;}
+.sysv{font-size:13px;color:var(--text2);}
+.dl-note{font-size:11px;color:var(--text3);margin-top:14px;}
+
+/* FOOTER */
+footer{position:relative;z-index:2;background:var(--text);padding:36px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+.flogo{font-family:'Orbitron',monospace;font-size:15px;font-weight:900;color:var(--orange);}
+.finfo{font-size:12px;color:rgba(255,255,255,0.4);text-align:center;line-height:1.85;}
+.fsdg{font-size:12px;color:rgba(255,255,255,0.4);text-align:right;}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease;}
+.revealed{opacity:1;transform:translateY(0);}
+
+@media(max-width:900px){
+  nav{padding:14px 20px;} .nav-links{display:none;}
+  section{padding:60px 20px;}
+  .story-grid,.res-grid{grid-template-columns:1fr;}
+  .chars-grid,.tech-grid{grid-template-columns:1fr 1fr;}
+  .sdg-grid{grid-template-columns:1fr;}
+  .stats-bar{padding:20px;} .stat{border-right:none;border-bottom:1px solid var(--border);padding:14px 0;} .stat:last-child{border-bottom:none;}
+  footer{flex-direction:column;text-align:center;} .fsdg{text-align:center;}
+  .sysreqs{grid-template-columns:1fr;}
+}
+@media(max-width:560px){.chars-grid,.tech-grid,.sat-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <div class="nav-logo">NOXIOUS PLANET</div>
+  <ul class="nav-links">
+    <li><a href="#story">เรื่องราว</a></li>
+    <li><a href="#characters">ตัวละคร</a></li>
+    <li><a href="#sdgs">SDGs</a></li>
+    <li><a href="#research">ผลวิจัย</a></li>
+    <li><a href="#tech">เทคโนโลยี</a></li>
+    <li><a href="#download">ดาวน์โหลด</a></li>
+  </ul>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section id="hero">
+  <div class="hero-blob"></div>
+  <div class="hero-inner">
+    <div class="badge">โครงงานวิทยาศาสตร์ · รหัส 6821403 · ปีการศึกษา 2568</div>
+    <h1><span class="glow-text">NOXIOUS</span><br>PLANET</h1>
+    <div class="hero-sub">A SERIOUS GAME FOR ENVIRONMENTAL AWARENESS AND SUSTAINABILITY</div>
+    <p class="hero-desc">
+      สำรวจโลกอนาคตที่ล่มสลายจากน้ำมือมนุษย์ รับบทเป็นหุ่นยนต์ <strong style="color:var(--orange)">P-33L</strong>
+      ผู้ถูกส่งมาฟื้นฟูระบบนิเวศที่พังทลาย และค้นพบว่าการกระทำในวันนี้จะหล่อหลอมอนาคตของโลกใบนี้
+    </p>
+    <div class="hero-btns">
+      <a href="#download" class="btn-primary">⬇&nbsp;&nbsp;ดาวน์โหลดเกม</a>
+      <a href="#story" class="btn-outline">▶&nbsp;&nbsp;รับชมเรื่องราว</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ STATS ═══ -->
+<div class="stats-bar">
+  <div class="stat reveal"><div class="stat-n">30</div><div class="stat-l">ผู้ร่วมทดสอบ</div></div>
+  <div class="stat reveal"><div class="stat-n">+35%</div><div class="stat-l">คะแนนเพิ่มขึ้น</div></div>
+  <div class="stat reveal"><div class="stat-n">4.55</div><div class="stat-l">ความพึงพอใจ / 5</div></div>
+  <div class="stat reveal"><div class="stat-n">4</div><div class="stat-l">SDGs ที่ครอบคลุม</div></div>
+  <div class="stat reveal"><div class="stat-n">3D</div><div class="stat-l">Unity Game Engine</div></div>
+</div>
+
+<!-- ═══ STORY ═══ -->
+<section id="story">
+  <div class="inner">
+    <div class="story-grid">
+      <div class="story-text">
+        <div class="stag reveal">// บทที่ 01 — เรื่องราว</div>
+        <h2 class="reveal">โลกที่มนุษย์<br>ทิ้งไว้เบื้องหลัง</h2>
+        <p class="ssub reveal">ปลาย ค.ศ. 2247 — ทรัพยากรโลกถูกใช้จนหมดสิ้น</p>
+        <p class="reveal">ในศตวรรษที่ 23 มนุษยชาติตัดสินใจ<strong>ออกจากโลก</strong>หลังจากใช้ทรัพยากรเกินขีดจำกัดมาเป็นเวลาสองร้อยปี ทิ้งไว้เพียงซากเมือง กองขยะ และอากาศพิษ</p>
+        <p class="reveal" style="margin-top:14px;">คุณคือ <strong>P-33L</strong> — หุ่นยนต์สำรวจรุ่นสุดท้ายที่ถูกส่งกลับมา พร้อมโดรนเพื่อน <strong>Efi</strong> ภารกิจ: ค้นหาว่าเกิดอะไรขึ้น และฟื้นฟูชีวิตให้กลับคืนมา</p>
+        <p class="reveal" style="margin-top:14px;">แต่ในความมืดมี <strong style="color:var(--red)">Nyx</strong> — สิ่งมีชีวิตที่กำเนิดจากมลพิษสะสม คอยขัดขวางทุกก้าว</p>
+      </div>
+      <div class="terminal reveal">
+        <div class="t-head">
+          <div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>
+          <span class="t-title">P33L_BOOT_LOG.sys</span>
+        </div>
+        <div class="t-body">
+          <div><span class="tgr">[ 00:00:01 ]</span> <span class="tg">SYSTEM BOOT...</span> <span class="tw">OK</span></div>
+          <div><span class="tgr">[ 00:00:03 ]</span> <span class="tc">UNIT</span><span class="tw"> P-33L — ONLINE</span></div>
+          <div><span class="tgr">[ 00:00:05 ]</span> <span class="tc">DRONE</span><span class="tw"> EFI — CONNECTED</span></div>
+          <br>
+          <div><span class="tgr">[ 00:00:08 ]</span> <span class="tg">SCANNING ENVIRONMENT...</span></div>
+          <div><span class="tgr">[ 00:00:09 ]</span> <span class="tr">⚠ AIR QUALITY: CRITICAL</span></div>
+          <div><span class="tgr">[ 00:00:09 ]</span> <span class="tr">⚠ BIODIVERSITY: 0.3%</span></div>
+          <div><span class="tgr">[ 00:00:09 ]</span> <span class="tr">⚠ TOXIN ENTITIES: DETECTED</span></div>
+          <br>
+          <div><span class="tgr">[ 00:00:12 ]</span> <span class="tg">MISSION LOADED:</span></div>
+          <div><span class="tw">&nbsp;→ RESTORE ECOSYSTEM NODE 01</span></div>
+          <div><span class="tw">&nbsp;→ NEUTRALIZE NYX ENTITIES</span></div>
+          <div><span class="tw">&nbsp;→ LOCATE THE LAST SEED VAULT</span></div>
+          <br>
+          <div><span class="tg">AWAITING COMMAND.</span> <span class="cur"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CHARACTERS ═══ -->
+<section id="characters">
+  <div class="inner">
+    <div class="stag reveal">// บทที่ 02 — ตัวละคร</div>
+    <h2 class="reveal">Cast of Noxious Planet</h2>
+    <p class="ssub reveal">ตัวละครทุกตัวปั้นด้วย Blender และนำเข้า Unity Game Engine</p>
+    <div class="chars-grid">
+      <div class="char-card reveal">
+        <div class="char-vis" style="background:linear-gradient(135deg,#fff0e4,#fde0c4);">🤖</div>
+        <div class="ci">
+          <div class="crole">// PLAYABLE CHARACTER</div>
+          <div class="cname">P-33L</div>
+          <p class="cdesc">หุ่นยนต์สำรวจรุ่นสุดท้าย ถูกส่งมาฟื้นฟูโลก ควบคุมผ่าน WASD + Mouse มุมมองบุคคลที่สาม</p>
+          <div class="cstats">
+            <div class="crow"><div class="clabel">Mobility</div><div class="cbar"><div class="cfill" style="width:85%"></div></div></div>
+            <div class="crow"><div class="clabel">Analysis</div><div class="cbar"><div class="cfill" style="width:95%"></div></div></div>
+            <div class="crow"><div class="clabel">Combat</div><div class="cbar"><div class="cfill" style="width:58%"></div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="char-card reveal">
+        <div class="char-vis" style="background:linear-gradient(135deg,#e8f4ff,#cce4ff);">🚁</div>
+        <div class="ci">
+          <div class="crole" style="color:var(--cyan);">// COMPANION DRONE</div>
+          <div class="cname" style="color:var(--cyan);">EFI</div>
+          <p class="cdesc">โดรน AI ผู้ช่วย สำรวจพื้นที่จากมุมสูง วิเคราะห์ข้อมูลสิ่งแวดล้อม และแนะนำแนวทางฟื้นฟู</p>
+          <div class="cstats">
+            <div class="crow"><div class="clabel">Mobility</div><div class="cbar"><div class="cfill" style="width:99%;background:var(--cyan)"></div></div></div>
+            <div class="crow"><div class="clabel">Analysis</div><div class="cbar"><div class="cfill" style="width:93%;background:var(--cyan)"></div></div></div>
+            <div class="crow"><div class="clabel">Combat</div><div class="cbar"><div class="cfill" style="width:16%;background:var(--cyan)"></div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="char-card reveal">
+        <div class="char-vis" style="background:linear-gradient(135deg,#fff0f0,#fdd8d8);">🦂</div>
+        <div class="ci">
+          <div class="crole" style="color:var(--red);">// ANTAGONIST</div>
+          <div class="cname" style="color:var(--red);">NYX</div>
+          <p class="cdesc">สิ่งมีชีวิตที่กำเนิดจากมลพิษสะสม สื่อถึงผลกระทบที่มองไม่เห็น — ศัตรูหลักของเกม</p>
+          <div class="cstats">
+            <div class="crow"><div class="clabel">Toxicity</div><div class="cbar"><div class="cfill" style="width:99%;background:var(--red)"></div></div></div>
+            <div class="crow"><div class="clabel">Mobility</div><div class="cbar"><div class="cfill" style="width:76%;background:var(--red)"></div></div></div>
+            <div class="crow"><div class="clabel">Combat</div><div class="cbar"><div class="cfill" style="width:88%;background:var(--red)"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SDGs ═══ -->
+<section id="sdgs">
+  <div class="inner">
+    <div class="stag reveal">// บทที่ 03 — เป้าหมายโลก</div>
+    <h2 class="reveal">เกมนี้สอดคล้องกับ<br>SDGs ข้อใดบ้าง?</h2>
+    <p class="ssub reveal">ทุกภารกิจออกแบบให้ถ่ายทอดเป้าหมายการพัฒนาที่ยั่งยืนขององค์การสหประชาชาติ</p>
+    <div class="sdg-grid">
+      <div class="sdg-card reveal">
+        <div class="sdg-num">07</div>
+        <div class="sdg-info"><h3>พลังงานสะอาดและราคาไม่แพง</h3><p>ภารกิจซ่อมโซลาร์เซลล์และกังหันลมในเมืองร้าง สอนให้เข้าใจว่าพลังงานหมุนเวียนคือกุญแจฟื้นฟูอารยธรรม</p></div>
+      </div>
+      <div class="sdg-card reveal">
+        <div class="sdg-num">11</div>
+        <div class="sdg-info"><h3>เมืองและชุมชนที่ยั่งยืน</h3><p>สำรวจซากเมืองที่ล่มสลาย เพื่อเข้าใจผลของการวางผังเมืองที่ไม่คำนึงถึงสิ่งแวดล้อม</p></div>
+      </div>
+      <div class="sdg-card reveal">
+        <div class="sdg-num">12</div>
+        <div class="sdg-info"><h3>การบริโภคและการผลิตที่รับผิดชอบ</h3><p>ระบบคัดแยกและรีไซเคิลวัสดุ — สะท้อนหลัก Circular Economy และการใช้ทรัพยากรอย่างมีคุณค่า</p></div>
+      </div>
+      <div class="sdg-card reveal">
+        <div class="sdg-num">13</div>
+        <div class="sdg-info"><h3>การรับมือการเปลี่ยนแปลงสภาพภูมิอากาศ</h3><p>ฉากอุณหภูมิสูง น้ำแข็งขั้วโลกละลาย และพายุกรด สื่อสารผลกระทบ Climate Crisis ที่อาจเกิดขึ้นจริง</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ RESEARCH ═══ -->
+<section id="research">
+  <div class="inner">
+    <div class="stag reveal">// บทที่ 04 — ผลการวิจัย</div>
+    <h2 class="reveal">ตัวเลขพิสูจน์<br>ประสิทธิภาพ</h2>
+    <p class="ssub reveal">ทดสอบกับนักเรียน ม.5 จำนวน 30 คน โรงเรียนวิทยาศาสตร์จุฬาภรณราชวิทยาลัย ลพบุรี</p>
+    <div class="res-grid">
+      <div class="chart-box reveal">
+        <div class="chart-ttl">// คะแนนความตระหนักรู้ก่อน-หลังเล่นเกม (เต็ม 20 คะแนน)</div>
+        <div class="bgrp">
+          <div class="blbl"><span>ก่อนเล่นเกม (Pre-test) — S.D. 1.85</span><span style="font-family:'Orbitron',monospace;color:var(--orange)">12.45</span></div>
+          <div class="btrack"><div class="bfill bpre" id="bpre" style="width:0%">12.45</div></div>
+        </div>
+        <div class="bgrp">
+          <div class="blbl"><span>หลังเล่นเกม (Post-test) — S.D. 1.50</span><span style="font-family:'Orbitron',monospace;color:var(--orange)">16.80</span></div>
+          <div class="btrack"><div class="bfill bpost" id="bpost" style="width:0%">16.80</div></div>
+        </div>
+        <div style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);display:flex;gap:22px;flex-wrap:wrap;">
+          <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">t-value</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--orange)">14.32*</div></div>
+          <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">p-value</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--orange)">.000</div></div>
+          <div><div style="font-size:10px;color:var(--text3);margin-bottom:3px;">นัยสำคัญ</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--orange)">α .05</div></div>
+        </div>
+        <p style="font-size:11px;color:var(--text3);margin-top:10px;">มีนัยสำคัญทางสถิติ — เกมช่วยเพิ่มความตระหนักรู้ได้จริง</p>
+      </div>
+      <div>
+        <div class="res-card hi reveal">
+          <div class="rlbl">คะแนนความพึงพอใจรวม</div>
+          <div class="rval">4.55 / 5.00</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px;">ระดับ "มากที่สุด" — S.D. = 0.53</div>
+        </div>
+        <div class="sat-grid reveal">
+          <div class="si"><div class="sa">กราฟิก &amp; ฉาก</div><div class="ss">4.60</div></div>
+          <div class="si"><div class="sa">โทนสี &amp; บรรยากาศ</div><div class="ss">4.55</div></div>
+          <div class="si"><div class="sa">ความสนุก &amp; ท้าทาย</div><div class="ss">4.70</div></div>
+          <div class="si"><div class="sa">Game Mechanics</div><div class="ss">4.65</div></div>
+          <div class="si"><div class="sa">สร้างความตระหนัก</div><div class="ss" style="color:var(--red)">4.80 ⭐</div></div>
+          <div class="si"><div class="sa">สื่อการเรียนรู้</div><div class="ss">4.75</div></div>
+        </div>
+        <div class="res-card reveal">
+          <div class="rlbl">ข้อค้นพบสำคัญ</div>
+          <p style="font-size:13px;color:var(--text3);line-height:1.8;margin-top:7px;">ด้านที่ได้คะแนนสูงสุด <span style="color:var(--orange);font-weight:700">"เกมช่วยให้ตระหนักถึงปัญหาสิ่งแวดล้อม"</span> (4.80) พิสูจน์ว่า Interactive Storytelling + Gamification ส่งเสริมการเรียนรู้ได้ดีกว่าสื่อดั้งเดิม</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TECH ═══ -->
+<section id="tech">
+  <div class="inner">
+    <div class="stag reveal">// บทที่ 05 — เทคโนโลยี</div>
+    <h2 class="reveal">Built With</h2>
+    <p class="ssub reveal">เครื่องมือระดับอุตสาหกรรมที่ใช้พัฒนาเกม</p>
+    <div class="tech-grid">
+      <div class="tech-card reveal"><div class="tico">🎮</div><div class="tname">Unity Engine</div><p class="tpurpose">ระบบเกมหลัก — ฉาก 3D, Physics, Lighting, Quest System, AI Behavior</p><div class="tver">v2022.3 LTS</div></div>
+      <div class="tech-card reveal"><div class="tico">🎨</div><div class="tname">Blender</div><p class="tpurpose">สร้างโมเดล 3D ตัวละคร P-33L, Efi, Nyx รวมถึงฉากและ Props ทั้งหมด</p><div class="tver">v4.0+</div></div>
+      <div class="tech-card reveal"><div class="tico">💻</div><div class="tname">C# / Visual Studio</div><p class="tpurpose">เขียนโค้ดระบบเคลื่อนที่, Quest, Dialogue System และ AI ของศัตรู</p><div class="tver">C# Scripting</div></div>
+      <div class="tech-card reveal"><div class="tico">🎵</div><div class="tname">FL Studio</div><p class="tpurpose">แต่งเพลงประกอบและ Sound Effects สร้างบรรยากาศโลกอนาคตร้าง</p><div class="tver">Audio Design</div></div>
+      <div class="tech-card reveal"><div class="tico">🖼</div><div class="tname">Photoshop &amp; Canva</div><p class="tpurpose">ออกแบบ UI, Texture และ Graphic Assets ทั้งหมดในเกม</p><div class="tver">UI/UX Design</div></div>
+      <div class="tech-card reveal"><div class="tico">📊</div><div class="tname">Google Forms + Sheets</div><p class="tpurpose">เก็บข้อมูล Pre/Post-test และวิเคราะห์ผลความพึงพอใจจากกลุ่มตัวอย่าง n=30</p><div class="tver">Data Collection</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ DOWNLOAD ═══ -->
+<section id="download">
+  <div class="inner">
+    <div class="stag reveal" style="text-align:center">// บทที่ 06 — ดาวน์โหลด</div>
+    <div class="dl-box reveal">
+      <div class="dl-icon">⬇️</div>
+      <h2>ดาวน์โหลดและเล่น</h2>
+      <p>สัมผัสประสบการณ์เรียนรู้ด้านสิ่งแวดล้อมในรูปแบบเกม 3D Adventure</p>
+      <div class="sysreqs">
+        <div class="sysitem"><div class="sysl">CPU</div><div class="sysv">Intel Core i5 Gen 8+ / AMD Ryzen 5+</div></div>
+        <div class="sysitem"><div class="sysl">RAM</div><div class="sysv">8 GB+ (แนะนำ 16 GB)</div></div>
+        <div class="sysitem"><div class="sysl">GPU</div><div class="sysv">NVIDIA GTX 1060 / AMD RX 580+</div></div>
+        <div class="sysitem"><div class="sysl">OS</div><div class="sysv">Windows 10 / 11 (64-bit)</div></div>
+      </div>
+      <button class="btn-primary" style="font-size:14px;padding:17px 52px;"
+        onclick="alert('📧 ติดต่อขอลิงก์ดาวน์โหลด\nCenterTPK01@gmail.com\nnattaratsampao@gmail.com')">
+        ⬇&nbsp;&nbsp;ดาวน์โหลดเกม (.exe)
+      </button>
+      <p class="dl-note">ขนาดไฟล์ประมาณ 500–800 MB · รองรับ Windows เท่านั้น</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="flogo">NOXIOUS PLANET</div>
+  <div class="finfo">
+    โครงงานวิทยาศาสตร์ รหัส 6821403<br>
+    นายฐาปกรณ์ รังผึ้ง &amp; นายณัฐรัตน์ สำเภา · ชั้นมัธยมศึกษาปีที่ 5<br>
+    โรงเรียนวิทยาศาสตร์จุฬาภรณราชวิทยาลัย ลพบุรี · ปีการศึกษา 2568
+  </div>
+  <div class="fsdg">SDGs #7 #11 #12 #13<br>ที่ปรึกษา: นายวีรยุทธ น้อยสำแดง</div>
+</footer>
+
+<script>
+/* PARTICLES — warm orange tones */
+const cv=document.getElementById('bg-canvas'),cx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+resize();window.addEventListener('resize',resize);
+const pts=Array.from({length:55},()=>({
+  x:Math.random()*3000,y:Math.random()*3000,
+  r:Math.random()*2.2+.4,
+  vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15,
+  a:Math.random()*.25+.06,
+  hue:Math.random()<.7?25:200
+}));
+(function draw(){
+  cx.clearRect(0,0,W,H);
+  pts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+    if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+    cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    cx.fillStyle=`hsla(${p.hue},90%,60%,${p.a})`;cx.fill();
+  });
+  requestAnimationFrame(draw);
+})();
+
+/* SCROLL REVEAL */
+const ro=new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{if(e.isIntersecting)setTimeout(()=>e.target.classList.add('revealed'),i*65);});
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>ro.observe(el));
+
+/* BAR CHART */
+const bo=new IntersectionObserver(entries=>{
+  if(entries[0].isIntersecting){
+    document.getElementById('bpre').style.width='62.25%';
+    document.getElementById('bpost').style.width='84%';
+  }
+},{threshold:.4});
+const ce=document.querySelector('.chart-box');if(ce)bo.observe(ce);
+</script>
+</body>
+</html>
